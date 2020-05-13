@@ -1,6 +1,7 @@
 import * as WS from "https://deno.land/std/ws/mod.ts";
 import Constants from "../Constants.ts";
 import { IsJsonString } from "../Utils/Json.ts";
+import Logger from "../Utils/Logger.ts";
 
 export default class Websocket {
     constructor(token: string) {
@@ -21,7 +22,7 @@ export default class Websocket {
      * @memberof Websocket
      */
     async Connect() {
-        console.log("Connecting");
+        Logger.Log("Websocket: Connecting to websocket")
 
         this.ws = await WS.connectWebSocket(Constants.GATEWAY_URL);
         await this.WebsocketLoop();
@@ -39,7 +40,7 @@ export default class Websocket {
      * @memberof Websocket
      */
     async WebsocketLoop() {
-        console.log("Starting loop");
+        Logger.Log("Websocket: Starting main loop")
 
         let interval = 40000;
 
@@ -66,9 +67,14 @@ export default class Websocket {
                         await this.VerifyClient();
                     }
 
-                    console.log(this.lastResponse);
+                    Logger.Log(this.lastResponse);
                 }
-            }, 200);
+
+                if (!this.KeepAlive) {
+                    Logger.Log("Closing websocket")
+                    return this.ws?.close();
+                }
+            }, 10);
         }
     }
 
@@ -80,8 +86,7 @@ export default class Websocket {
      * @memberof Websocket
      */
     async SendHeartBeat() {
-        if (!this.KeepAlive) return;
-        console.log("Keep alive");
+        Logger.Log("Websocket: Keep alive")
         // Heartbeat
         let s = this.lastResponse?.s ?? null;
 
@@ -100,9 +105,11 @@ export default class Websocket {
      * @memberof Websocket
      */
     async VerifyClient() {
+        // Should be moved to client-manager later
+
         // Check if we are infact connected
         if (this.ws) {
-            console.log("Is verifying Discord client.");
+            Logger.Log("Websocket: Starting verification");
             this.ws?.send(
                 await this.getWebsocketString({
                     op: Constants.OPCODES.IDENTIFY,

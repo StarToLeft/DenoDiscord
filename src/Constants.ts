@@ -6,4 +6,8 @@ export default class Constants {
         IDENTIFY: 2,
         HELLO: 10,
     }
+
+    static options: {
+        Debug: true,
+    }
 }
