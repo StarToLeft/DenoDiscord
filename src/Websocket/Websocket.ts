@@ -1,11 +1,11 @@
 import * as WS from "https://deno.land/std/ws/mod.ts";
-import Constants from "../Constants.ts";
-import { IsJsonString } from "../Utils/Json.ts";
-import Logger from "../Utils/Logger.ts";
+import { Constants } from "../Constants.ts";
+import EventEmitter from "../Events/EventEmitter.ts";
+import { Logger } from "../Utils/Logger.ts";
 
 export default class Websocket {
-    constructor(token: string) {
-        this.Token = token;
+    constructor(callback: EventEmitter) {
+        this.socketDataCallback = callback;
     }
 
     // Websocket data
@@ -14,25 +14,25 @@ export default class Websocket {
     public KeepAlive: boolean = true;
 
     // Identifier
-    public Token: string;
+    public Token: string = "";
 
     /**
      * Connect to Discord Gateway
      *
      * @memberof Websocket
      */
-    async Connect() {
-        Logger.Log("Websocket: Connecting to websocket")
+    async Connect(token: string) {
+        this.Token = token;
+
+        Logger.Log("Websocket: Connecting to websocket");
 
         this.ws = await WS.connectWebSocket(Constants.GATEWAY_URL);
         await this.WebsocketLoop();
     }
 
-    // Last response recieved from Discord
-    protected lastResponse: any = {};
+    private s: number | null = null;
 
-    // Heartbeat interval
-    protected nextSendHeartbeat: number = 0;
+    private socketDataCallback: EventEmitter;
 
     /**
      * Discord websocket loop
@@ -40,41 +40,35 @@ export default class Websocket {
      * @memberof Websocket
      */
     async WebsocketLoop() {
-        Logger.Log("Websocket: Starting main loop")
+        Logger.Log("Websocket: Starting main loop");
 
         let interval = 40000;
 
         if (this.ws) {
-            setInterval(async () => {
-                if (!this.ws) return;
-
-                if (this.nextSendHeartbeat < new Date().getTime()) {
-                    await this.SendHeartBeat();
-                    this.nextSendHeartbeat = new Date().getTime() + interval;
-                }
+            if (!this.ws) return;
 
                 for await (const msg of this.ws) {
-                    if (!IsJsonString(msg.toString())) {
-                        this.lastResponse = msg;
-                    } else {
-                        this.lastResponse = JSON.parse(msg.toString());
+                    let compMsg;
+                    if (typeof msg == "object") compMsg = msg;
+                    else {
+                        compMsg = JSON.parse(msg);
                     }
 
-                    if (this.lastResponse?.op == Constants.OPCODES.HELLO) {
-                        let _interval = this.lastResponse?.d?.heartbeat_interval;
-                        interval = _interval;
+                    this.s = compMsg?.s;
 
-                        await this.VerifyClient();
+                    if (compMsg?.op == Constants.OPCODES.HELLO) {
+                        interval = compMsg?.d?.heartbeat_interval;
+
+                        this.SendHeartBeat(interval);
+                        this.VerifyClient();
                     }
 
-                    Logger.Log(this.lastResponse);
-                }
+                    console.log(compMsg)
 
-                if (!this.KeepAlive) {
-                    Logger.Log("Closing websocket")
-                    return this.ws?.close();
+                    if (compMsg?.op == Constants.OPCODES.Data) {
+                        this.socketDataCallback.HandleEvent(compMsg);
+                    }
                 }
-            }, 10);
         }
     }
 
@@ -85,17 +79,28 @@ export default class Websocket {
      * @returns
      * @memberof Websocket
      */
-    async SendHeartBeat() {
-        Logger.Log("Websocket: Keep alive")
-        // Heartbeat
-        let s = this.lastResponse?.s ?? null;
+    async SendHeartBeat(interval: number) {
+        try {
+            if (!this.KeepAlive) return;
+            Logger.Log("Websocket: Keep alive");
 
-        this.ws?.send(
-            JSON.stringify({
-                op: Constants.OPCODES.HEARTBEAT,
-                d: s,
-            })
-        );
+            if (this.ws) {
+                this.ws.send(
+                    JSON.stringify({
+                        op: Constants.OPCODES.HEARTBEAT,
+                        d: this.s,
+                    })
+                );
+            } else {
+                Logger.Log("Websocket: Sendheartbeat, ws not defined.");
+            }
+
+            setTimeout(() => {
+                this.SendHeartBeat(interval);
+            }, interval)
+        } catch {
+            this.Connect(this.Token);
+        }
     }
 
     /**
@@ -121,12 +126,6 @@ export default class Websocket {
                             $device: "denodiscord",
                         },
                         compress: false,
-                        large_threshold: 250,
-                        //guild_subscriptions: false,
-                        //shard: [0, 1],
-                        // This intent represents 1 << 0 for GUILDS, 1 << 1 for GUILD_MEMBERS, and 1 << 2 for GUILD_BANS
-                        // This connection will only receive the events defined in those three intents
-                        //intents: 7,
                     },
                 })
             );
@@ -135,6 +134,14 @@ export default class Websocket {
         }
     }
 
+    /**
+     * Stringify websocket data
+     *
+     * @template T
+     * @param {T} object
+     * @returns
+     * @memberof Websocket
+     */
     async getWebsocketString<T>(object: T) {
         return JSON.stringify(object);
     }

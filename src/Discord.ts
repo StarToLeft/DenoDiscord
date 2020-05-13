@@ -1,31 +1,54 @@
+import { DiscordDispatchEvents } from "./Events/DispatchEvents.ts";
+import EventEmitter from "./Events/EventEmitter.ts";
 import Globals from "./Globals.ts";
 import Websocket from "./Websocket/Websocket.ts";
 
-export default class Discord {
-    constructor(token: string) {
-        // Initializing
-        this.Globals = new Globals();
+export namespace Discord {
+    export class Client {
+        constructor() {
+            // Register a new EventHandler
+            this.EventHandler = new EventEmitter();
 
-        this.Globals.Token = token;
+            // Initialize a websocket
+            this.Websocket = new Websocket(this.EventHandler);
+        }
 
-        // Networking
-        this.Websocket = new Websocket(this.Globals.Token);
-    }
+        protected Websocket: Websocket;
+        public EventHandler: EventEmitter;
 
-    public Globals: Globals;
-    protected Websocket: Websocket;
+        /**
+         * Register event listener
+         *
+         * @param {string} event
+         * @param {CallableFunction} callback
+         * @memberof Discord
+         */
+        on(event: DiscordDispatchEvents, eventCallback: CallableFunction) {
+            this.EventHandler.RegisterListener(event, eventCallback);
+        }
 
+        /**
+         * Register an event listener once
+         *
+         * @param {string} event
+         * @param {CallableFunction} callback
+         * @memberof Discord
+         */
+        once(event: DiscordDispatchEvents, eventCallback: CallableFunction) {
+            this.EventHandler.RegisterListener(event, eventCallback, true);
+        }
 
-    /**
-     * Log into discord account
-     *
-     * @memberof Discord
-     */
-    public async login() {
-        // Connect to the websocket
-        await this.Websocket.Connect();
+        /**
+         * Log into discord account
+         *
+         * @memberof Discord
+         */
+        public async login(token: string) {
+            // Set the bot token
+            Globals.getInstance().Token = token;
+
+            // Connect to the websocket
+            await this.Websocket.Connect(Globals.getInstance().Token);
+        }
     }
 }
-
-export { };
-

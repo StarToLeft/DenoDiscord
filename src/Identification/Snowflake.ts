@@ -1,13 +1,21 @@
 export default class Snowflake {
 
-    protected snowflake: string = "";
+    protected _snowflake: string = "";
 
-    public get get() : string {
-        return this.snowflake;
+    constructor(id: string = "") {
+        this._snowflake = id;
     }
 
-    public set set(id : string) {
-        this.snowflake = id;
+    public get snowflake() : string {
+        return this._snowflake;
+    }
+
+    public set snowflake(id : string) {
+        this._snowflake = id;
+    }
+
+    public getCreationDate() {
+        
     }
 
 }
