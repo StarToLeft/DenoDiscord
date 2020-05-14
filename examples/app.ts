@@ -9,7 +9,8 @@ app.on("READY", () => {
     console.log(`Ready`);
 })
 
-app.on("MESSAGE_CREATE", () => {
+app.on("MESSAGE_CREATE", (data: any) => {
+    console.log(data);
     console.log("Recieved message")
 })
 
