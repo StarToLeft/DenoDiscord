@@ -1,4 +1,5 @@
-import { DiscordEvent } from "../Events/DiscordEvents.ts";
+import { Discord } from "../Discord.ts";
+import { IDiscordEvent } from "../Events/DiscordEvents.ts";
 import { DiscordDispatchEvents, GatewayPayload } from "../Events/DispatchEvents.ts";
 import { MessageCreatedEvent } from "./EventTypes/MessageCreatedEvent.ts";
 import { PresenceUpdateEvent } from "./EventTypes/PresenceUpdateEvent.ts";
@@ -25,8 +26,13 @@ export class EventListener {
 }
 
 export default class EventEmitter {
+    constructor(client: Discord.Client) {
+        this.client = client;
+    }
+
     private epoch: number = 0;
     private Listeneres: EventListener[] = [];
+    private client: Discord.Client;
 
     /**
      * Register a new Listener
@@ -71,21 +77,22 @@ export default class EventEmitter {
         if (data?.t) {
             switch (data.t) {
                 case "READY": {
-                    let eventData = new ReadyEvent(data?.d);
+                    let eventData = new ReadyEvent(this.client);
+                    await eventData.assign(data?.d);
 
                     this.TriggerEvent(data.t, eventData);
                     break;
                 }
 
                 case "MESSAGE_CREATE": {
-                    let eventData = new MessageCreatedEvent(data?.d);
+                    let eventData = new MessageCreatedEvent(data?.d, this.client);
 
                     this.TriggerEvent(data.t, eventData);
                     break;
                 }
 
                 case "PRESENCE_UPDATE": {
-                    let eventData = new PresenceUpdateEvent(data?.d);
+                    let eventData = new PresenceUpdateEvent(data?.d, this.client);
 
                     this.TriggerEvent(data.t, eventData);
                     break;
@@ -102,10 +109,10 @@ export default class EventEmitter {
      * Emit a denodiscord event
      *
      * @param {DiscordDispatchEvents} event
-     * @param {DiscordEvent} eventData
+     * @param {IDiscordEvent} eventData
      * @memberof EventHandler
      */
-    public async TriggerEvent(event: DiscordDispatchEvents, eventData: DiscordEvent) {
+    public async TriggerEvent(event: DiscordDispatchEvents, eventData: IDiscordEvent) {
         this.Listeneres.filter((x) => x.event == event).forEach((eventListener) => {
             eventListener.callback(eventData);
 

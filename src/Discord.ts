@@ -1,20 +1,28 @@
+import UserCache from "./Cache/UserCache.ts";
 import { DiscordDispatchEvents } from "./Events/DispatchEvents.ts";
 import EventEmitter from "./Events/EventEmitter.ts";
 import Globals from "./Globals.ts";
+import ClientUser from "./Structs/ClientUser.ts";
 import Websocket from "./Websocket/Websocket.ts";
 
 export namespace Discord {
     export class Client {
         constructor() {
             // Register a new EventHandler
-            this.EventHandler = new EventEmitter();
+            this.EventHandler = new EventEmitter(this);
 
             // Initialize a websocket
             this.Websocket = new Websocket(this.EventHandler);
+
+            this.UserCache = new UserCache(this);
         }
 
         protected Websocket: Websocket;
         public EventHandler: EventEmitter;
+
+        public UserCache: UserCache;
+
+        public clientUser: ClientUser | undefined;
 
         /**
          * Register event listener
@@ -36,6 +44,12 @@ export namespace Discord {
          */
         once(event: DiscordDispatchEvents, eventCallback: CallableFunction) {
             this.EventHandler.RegisterListener(event, eventCallback, true);
+        }
+
+        set(name: string, value: boolean) {
+            if (name.toLowerCase().replace(" ", "") == "debug") {
+                Globals.getInstance().Debug = value;
+            }
         }
 
         /**

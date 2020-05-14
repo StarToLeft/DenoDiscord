@@ -1,0 +1,12 @@
+scripts:
+    # "denox run start" --allow-read permission overwrite the globals permission
+    start:
+        file: ./examples/app.ts
+    develop:
+        file: ./examples/app.ts
+globals:
+    permissions:
+        allow-net: true
+        allow-read: true
+        allow-env: true
+        allow-hrtime: true

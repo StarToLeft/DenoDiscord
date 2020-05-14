@@ -1,7 +1,7 @@
 import Globals from "../Globals.ts";
 
 export class Logger {
-    static async Log<T>(log: T) {
+    static Log<T>(log: T) {
         if (Globals.getInstance().Debug) {
             const date = new Date();
 
@@ -28,6 +28,26 @@ export class Logger {
                 seconds;
 
             console.log(`[${formattedDate}] ${log}`);
+        }
+    }
+    
+    static Warn<T>(Log: T) {
+        this.Log(Log);
+    }
+
+    static Error<T>(Log: T) {
+        this.Log(Log);
+    }
+
+    static async Time(name: string) {
+        if (Globals.getInstance().Debug) {
+            console.time(name);
+        }
+    }
+
+    static async TimeEnd(name: string) {
+        if (Globals.getInstance().Debug) {
+            console.timeEnd(name);
         }
     }
 }

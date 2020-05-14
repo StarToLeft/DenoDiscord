@@ -1,22 +1,22 @@
-import { Discord } from "../mod.ts";
-import Globals from "../src/Globals.ts";
+import { config } from "https://deno.land/x/dotenv/mod.ts";
+import { Discord, MessageCreatedEvent, PresenceUpdateEvent, ReadyEvent } from "../mod.ts";
 
 const app = new Discord.Client();
 
-Globals.getInstance().Debug = true;
+app.set("debug", true);
 
-app.on("READY", () => {
+app.on("READY", (e: ReadyEvent) => {
     console.log(`Ready`);
+
+    console.log(app.clientUser?.user);
 })
 
-app.on("MESSAGE_CREATE", (data: any) => {
-    console.log(data);
+app.on("MESSAGE_CREATE", (e: MessageCreatedEvent) => {
     console.log("Recieved message")
 })
 
-app.once("PRESENCE_UPDATE", (data: any) => {
-    console.log(data);
+app.once("PRESENCE_UPDATE", (e: PresenceUpdateEvent) => {
     console.log("Presence update");
 })
 
-app.login("");
+app.login(config().Token);

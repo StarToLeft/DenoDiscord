@@ -1,9 +1,5 @@
-import { DiscordDispatchEvents } from "../Events/DispatchEvents.ts";
+import { Discord } from "../Discord.ts";
 
-export abstract class DiscordEvent {
-    abstract data: DiscordEventData;
-}
-
-export abstract class DiscordEventData {
-    public abstract type: DiscordDispatchEvents;
+export interface IDiscordEvent {
+    client: Discord.Client;
 }

@@ -26,6 +26,8 @@ export default class Websocket {
 
         Logger.Log("Websocket: Connecting to websocket");
 
+        Logger.Time("Websocket.Connect-Verify");
+
         this.ws = await WS.connectWebSocket(Constants.GATEWAY_URL);
         await this.WebsocketLoop();
     }
@@ -55,12 +57,13 @@ export default class Websocket {
                 }
 
                 this.s = compMsg?.s;
-
+                
                 if (compMsg?.op == Constants.OPCODES.HELLO) {
                     interval = compMsg?.d?.heartbeat_interval;
 
                     this.SendHeartBeat(interval);
                     this.VerifyClient();
+                    Logger.TimeEnd("Websocket.Connect-Verify");
                 }
 
                 if (compMsg?.op == Constants.OPCODES.Data) {
@@ -97,6 +100,7 @@ export default class Websocket {
                 this.SendHeartBeat(interval);
             }, interval);
         } catch {
+            Logger.Warn("Websocket: There most likely was a invalid token");
             this.Connect(this.Token);
         }
     }
