@@ -47,28 +47,26 @@ export default class Websocket {
         if (this.ws) {
             if (!this.ws) return;
 
-                for await (const msg of this.ws) {
-                    let compMsg;
-                    if (typeof msg == "object") compMsg = msg;
-                    else {
-                        compMsg = JSON.parse(msg);
-                    }
-
-                    this.s = compMsg?.s;
-
-                    if (compMsg?.op == Constants.OPCODES.HELLO) {
-                        interval = compMsg?.d?.heartbeat_interval;
-
-                        this.SendHeartBeat(interval);
-                        this.VerifyClient();
-                    }
-
-                    console.log(compMsg)
-
-                    if (compMsg?.op == Constants.OPCODES.Data) {
-                        this.socketDataCallback.HandleEvent(compMsg);
-                    }
+            for await (const msg of this.ws) {
+                let compMsg;
+                if (typeof msg == "object") compMsg = msg;
+                else {
+                    compMsg = JSON.parse(msg);
                 }
+
+                this.s = compMsg?.s;
+
+                if (compMsg?.op == Constants.OPCODES.HELLO) {
+                    interval = compMsg?.d?.heartbeat_interval;
+
+                    this.SendHeartBeat(interval);
+                    this.VerifyClient();
+                }
+
+                if (compMsg?.op == Constants.OPCODES.Data) {
+                    this.socketDataCallback.HandleEvent(compMsg);
+                }
+            }
         }
     }
 
@@ -97,7 +95,7 @@ export default class Websocket {
 
             setTimeout(() => {
                 this.SendHeartBeat(interval);
-            }, interval)
+            }, interval);
         } catch {
             this.Connect(this.Token);
         }
@@ -110,8 +108,6 @@ export default class Websocket {
      * @memberof Websocket
      */
     async VerifyClient() {
-        // Should be moved to client-manager later
-
         // Check if we are infact connected
         if (this.ws) {
             Logger.Log("Websocket: Starting verification");
@@ -126,6 +122,7 @@ export default class Websocket {
                             $device: "denodiscord",
                         },
                         compress: false,
+                        large_threshold: 250,
                     },
                 })
             );

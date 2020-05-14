@@ -1,6 +1,8 @@
-import { DiscordEvent, ReadyEvent } from "../Events/DiscordEvents.ts";
+import { DiscordEvent } from "../Events/DiscordEvents.ts";
 import { DiscordDispatchEvents, GatewayPayload } from "../Events/DispatchEvents.ts";
-import { Logger } from "../Utils/Logger.ts";
+import { MessageCreatedEvent } from "./EventTypes/MessageCreatedEvent.ts";
+import { PresenceUpdateEvent } from "./EventTypes/PresenceUpdateEvent.ts";
+import { ReadyEvent } from "./EventTypes/ReadyEvent.ts";
 
 export class EventListener {
     constructor(
@@ -76,7 +78,17 @@ export default class EventEmitter {
                 }
 
                 case "MESSAGE_CREATE": {
-                    Logger.Log("Message recieved");
+                    let eventData = new MessageCreatedEvent(data?.d);
+
+                    this.TriggerEvent(data.t, eventData);
+                    break;
+                }
+
+                case "PRESENCE_UPDATE": {
+                    let eventData = new PresenceUpdateEvent(data?.d);
+
+                    this.TriggerEvent(data.t, eventData);
+                    break;
                 }
             }
 
