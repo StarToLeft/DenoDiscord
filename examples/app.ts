@@ -1,22 +1,16 @@
 import { config } from "https://deno.land/x/dotenv/mod.ts";
-import { Discord, MessageCreatedEvent, PresenceUpdateEvent, ReadyEvent } from "../mod.ts";
+import { Discord, ReadyEvent } from "../mod.ts";
 
-const app = new Discord.Client();
+const client = new Discord.Client();
 
-app.set("debug", true);
+client.set("DEBUG", true);
 
-app.on("READY", (e: ReadyEvent) => {
-    console.log(`Ready`);
+client.on("READY", async (e: ReadyEvent) => {
+    console.log(`Ready as ${e.user.tag}`);
 
-    console.log(app.clientUser?.user);
-})
+    let user = await client.users.resolve("223707551013797888");
 
-app.on("MESSAGE_CREATE", (e: MessageCreatedEvent) => {
-    console.log("Recieved message")
-})
+    console.log(user?.tag);
+});
 
-app.once("PRESENCE_UPDATE", (e: PresenceUpdateEvent) => {
-    console.log("Presence update");
-})
-
-app.login(config().Token);
+client.login(config().Token);

@@ -1,21 +1,21 @@
 import { Presence } from "../../mod.ts";
-import DMChannel from "./DMChannel.ts";
+import Snowflake from "../Snowflake.ts";
 
 export interface IUser {
     id: string;
 
     username: string;
     discriminiator: string;
+    tag: string;
     avatar?: string;
     readonly bot?: boolean;
     readonly createdTimestamp?: Date;
     readonly defaultAvatarURL?: string;
-    readonly dmChannel?: DMChannel;
+    readonly dmChannel?: any; //DMChannel;
     locale?: string;
     readonly partial?: boolean;
     readonly presence: Presence;
     system?: boolean;
-    tag?: string;
 }
 
 export default class User implements IUser {
@@ -25,20 +25,22 @@ export default class User implements IUser {
         this.username = username;
         this.discriminiator = discriminator;
         this.tag = username + "#" + discriminator;
+
+        this.createdTimestamp = Snowflake.getSnowflakeDate(this.id);
     }
 
     id: string;
 
     username: string;
     discriminiator: string;
+    tag: string;
     avatar?: string | undefined;
     bot?: boolean | undefined;
     createdTimestamp?: Date | undefined;
-    defaultAvatarURL?: string | undefined;
+    defaultAvatarURL?: string = "https://cdn.discordapp.com/embed/avatars/4.png";
     dmChannel?: any;
     locale?: string | undefined;
     partial?: boolean | undefined;
     presence: any;
     system?: boolean | undefined;
-    tag?: string | undefined;
 }

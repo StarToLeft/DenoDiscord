@@ -1,30 +1,41 @@
 import { Discord } from "../../Discord.ts";
-import ClientUser from "../../Structs/ClientUser.ts";
-import User from "../../Structs/User.ts";
+import User from "../../Structures/User.ts";
 import { Logger } from "../../Utils/Logger.ts";
 import { IDiscordEvent } from "../DiscordEvents.ts";
 
+
+/**
+ * Event triggered on discord websocket "READY"
+ *
+ * @export
+ * @class ReadyEvent
+ * @implements {IDiscordEvent}
+ */
 export class ReadyEvent implements IDiscordEvent {
     constructor(client: Discord.Client) {
-        this.clientUser = new ClientUser(new User("", "", ""), client);
         this.client = client;
     }
 
+    /**
+     * Assign data, because we do need Async for this. 
+     * Really, constructors should have async tbh, I'd love that.
+     *
+     * @param {*} data
+     * @returns
+     * @memberof ReadyEvent
+     */
     async assign(data: any) {
-        this.clientUser = data;
-        let user = await this.client.UserCache.resolve(data.user.id);
+        let user = await this.client.users.resolve(data.user.id);
+        
         if (user) {
-            let clientUser = new ClientUser(user, this.client);
-
-            this.client.clientUser = clientUser;
-            this.clientUser = clientUser;
-            return clientUser;
+            this.user = user;
+            return user;
         }
 
         Logger.Error("ReadyEvent: Failed to fetch client.");
     }
 
-    clientUser: ClientUser;
+    user: User = new User("", "", "");
 
     client: Discord.Client;
 }

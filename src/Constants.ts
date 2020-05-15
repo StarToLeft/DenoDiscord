@@ -7,5 +7,6 @@ export class Constants {
         HEARTBEAT: 1,
         IDENTIFY: 2,
         HELLO: 10,
+        RESUME: 6
     }
 }

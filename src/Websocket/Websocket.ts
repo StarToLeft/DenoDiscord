@@ -16,6 +16,8 @@ export default class Websocket {
     // Identifier
     public Token: string = "";
 
+    public sessionId: string | undefined;
+
     /**
      * Connect to Discord Gateway
      *
@@ -47,7 +49,18 @@ export default class Websocket {
         let interval = 40000;
 
         if (this.ws) {
-            if (!this.ws) return;
+            if (this.sessionId) {
+                this.ws?.send(
+                    await this.getWebsocketString({
+                        op: Constants.OPCODES.RESUME,
+                        d: {
+                            token: this.Token,
+                            session_id: this.sessionId,
+                            seq: this.s,
+                        },
+                    })
+                );
+            }
 
             for await (const msg of this.ws) {
                 let compMsg;
@@ -57,7 +70,9 @@ export default class Websocket {
                 }
 
                 this.s = compMsg?.s;
-                
+
+                console.log(compMsg);
+
                 if (compMsg?.op == Constants.OPCODES.HELLO) {
                     interval = compMsg?.d?.heartbeat_interval;
 

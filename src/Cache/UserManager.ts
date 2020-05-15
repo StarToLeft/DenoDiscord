@@ -1,19 +1,19 @@
 import { Constants } from "../Constants.ts";
 import { Discord } from "../Discord.ts";
 import Globals from "../Globals.ts";
-import User from "../Structs/User.ts";
+import User from "../Structures/User.ts";
 import { Logger } from "../Utils/Logger.ts";
 
-interface IUserCache {
+interface IUserManager {
     [id: string]: User;
 }
 
-export default class UserCache {
+export default class UserManager {
     constructor(client: Discord.Client) {
         this.client = client;
     }
 
-    public cache: IUserCache = {};
+    public cache: IUserManager = {};
 
     public client: Discord.Client;
 
@@ -43,10 +43,12 @@ export default class UserCache {
                     }
                     
                     let user: User = new User(data.id, data.username, data.discriminator);
-                    user.bot = data?.bot;
+                    user.bot = data?.bot ?? false;
                     user.avatar = data?.avatar;
+                    user.system = data?.system ?? false;
+                    user.locale = data?.locale ?? "";
                     
-                    resolve(data);
+                    resolve(user);
                 })
                 .catch((error) => {
                     Logger.Error("UserCache: Failed to fetch user, rejecting.");

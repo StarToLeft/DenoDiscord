@@ -1,28 +1,30 @@
-import UserCache from "./Cache/UserCache.ts";
+import UserManager from "./Cache/UserManager.ts";
+import { ClientOptions } from "./ClientOptions.ts";
 import { DiscordDispatchEvents } from "./Events/DispatchEvents.ts";
 import EventEmitter from "./Events/EventEmitter.ts";
 import Globals from "./Globals.ts";
-import ClientUser from "./Structs/ClientUser.ts";
+import User from "./Structures/User.ts";
+import { Logger } from "./Utils/Logger.ts";
 import Websocket from "./Websocket/Websocket.ts";
 
 export namespace Discord {
     export class Client {
         constructor() {
             // Register a new EventHandler
-            this.EventHandler = new EventEmitter(this);
+            this.eventHandler = new EventEmitter(this);
 
             // Initialize a websocket
-            this.Websocket = new Websocket(this.EventHandler);
+            this.websocket = new Websocket(this.eventHandler);
 
-            this.UserCache = new UserCache(this);
+            this.users = new UserManager(this);
         }
 
-        protected Websocket: Websocket;
-        public EventHandler: EventEmitter;
+        protected websocket: Websocket;
+        protected eventHandler: EventEmitter;
 
-        public UserCache: UserCache;
+        public users: UserManager;
 
-        public clientUser: ClientUser | undefined;
+        public user: User | undefined;
 
         /**
          * Register event listener
@@ -32,7 +34,7 @@ export namespace Discord {
          * @memberof Discord
          */
         on(event: DiscordDispatchEvents, eventCallback: CallableFunction) {
-            this.EventHandler.RegisterListener(event, eventCallback);
+            this.eventHandler.RegisterListener(event, eventCallback);
         }
 
         /**
@@ -43,13 +45,35 @@ export namespace Discord {
          * @memberof Discord
          */
         once(event: DiscordDispatchEvents, eventCallback: CallableFunction) {
-            this.EventHandler.RegisterListener(event, eventCallback, true);
+            this.eventHandler.RegisterListener(event, eventCallback, true);
         }
 
-        set(name: string, value: boolean) {
-            if (name.toLowerCase().replace(" ", "") == "debug") {
-                Globals.getInstance().Debug = value;
+        /**
+         * Set a discord client-option
+         *
+         * @param {ClientOptions} option
+         * @param {boolean} value
+         * @memberof Client
+         */
+        set(option: ClientOptions, value: any): boolean {
+            switch (option) {
+                case "DEBUG": {
+                    try {
+                        Globals.getInstance().Debug = value;
+                    } catch {
+                        Logger.Error(
+                            `Discord.Client.set -> ${option}: Passed value was not a boolean.`
+                        );
+                        return false;
+                    }
+
+                    break;
+                }
             }
+
+            Logger.Log(`Discord.Client.set -> ${option}: Set option to ${value}`);
+
+            return true;
         }
 
         /**
@@ -62,7 +86,7 @@ export namespace Discord {
             Globals.getInstance().Token = token;
 
             // Connect to the websocket
-            await this.Websocket.Connect(Globals.getInstance().Token);
+            await this.websocket.Connect(Globals.getInstance().Token);
         }
     }
 }
