@@ -1,5 +1,6 @@
 export enum ClientOptionsTypes {
-    "DEBUG",
+    "DEBUG", 
+    "LOG_WEBSOCKET",
 }
 
-export type ClientOptions = ClientOptionsTypes[keyof ClientOptionsTypes] | "DEBUG";
+export type ClientOptions = ClientOptionsTypes[keyof ClientOptionsTypes] | "DEBUG" | "LOG_WEBSOCKET";

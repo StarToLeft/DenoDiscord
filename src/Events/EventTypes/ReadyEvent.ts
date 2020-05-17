@@ -29,6 +29,7 @@ export class ReadyEvent implements IDiscordEvent {
         
         if (user) {
             this.user = user;
+            this.client.user = user;
             return user;
         }
 

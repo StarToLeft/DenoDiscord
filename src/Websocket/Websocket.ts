@@ -1,6 +1,7 @@
 import * as WS from "https://deno.land/std/ws/mod.ts";
 import { Constants } from "../Constants.ts";
 import EventEmitter from "../Events/EventEmitter.ts";
+import Globals from "../Globals.ts";
 import { Logger } from "../Utils/Logger.ts";
 
 export default class Websocket {
@@ -17,6 +18,11 @@ export default class Websocket {
     public Token: string = "";
 
     public sessionId: string | undefined;
+
+    // Ping to discord
+    public ping: number = 0;
+    private beginPingDate: Date = new Date();
+    private endPingDate: Date = new Date();
 
     /**
      * Connect to Discord Gateway
@@ -71,7 +77,13 @@ export default class Websocket {
 
                 this.s = compMsg?.s;
 
-                console.log(compMsg);
+                if (compMsg?.op == Constants.OPCODES.HEARTBEAT_RESPONSE) {
+                    this.endPingDate = new Date();
+                    this.ping = this.endPingDate.getTime() - this.beginPingDate.getTime();
+                }
+
+                if (Globals.getInstance().LogWebsocket)
+                    console.log(compMsg);
 
                 if (compMsg?.op == Constants.OPCODES.HELLO) {
                     interval = compMsg?.d?.heartbeat_interval;
@@ -107,6 +119,8 @@ export default class Websocket {
                         d: this.s,
                     })
                 );
+
+                this.beginPingDate = new Date();
             } else {
                 Logger.Log("Websocket: Sendheartbeat, ws not defined.");
             }

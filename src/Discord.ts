@@ -1,3 +1,5 @@
+import APIChannel from "./API/APIChannel.ts";
+import { GuildManager } from "./Cache/GuildManager.ts";
 import UserManager from "./Cache/UserManager.ts";
 import { ClientOptions } from "./ClientOptions.ts";
 import { DiscordDispatchEvents } from "./Events/DispatchEvents.ts";
@@ -17,14 +19,30 @@ export namespace Discord {
             this.websocket = new Websocket(this.eventHandler);
 
             this.users = new UserManager(this);
+            this.guilds = new GuildManager(this);
+
+            this.APIChannel = new APIChannel(this);
+
+            this.user = new User("", "", "");
         }
 
         protected websocket: Websocket;
         protected eventHandler: EventEmitter;
 
+        public token: string = "";
+
+        public guilds: GuildManager;
         public users: UserManager;
 
-        public user: User | undefined;
+        public user: User;
+
+        public APIChannel: APIChannel;
+
+        
+        public get ping() : number {
+            return this.websocket.ping;
+        }
+        
 
         /**
          * Register event listener
@@ -69,6 +87,19 @@ export namespace Discord {
 
                     break;
                 }
+                
+                case "LOG_WEBSOCKET": {
+                    try {
+                        Globals.getInstance().LogWebsocket = value;
+                    } catch {
+                        Logger.Error(
+                            `Discord.Client.set -> ${option}: Passed value was not a boolean.`
+                        );
+                        return false;
+                    }
+
+                    break;
+                }
             }
 
             Logger.Log(`Discord.Client.set -> ${option}: Set option to ${value}`);
@@ -83,7 +114,10 @@ export namespace Discord {
          */
         public async login(token: string) {
             // Set the bot token
+            //! DEPRECATED
             Globals.getInstance().Token = token;
+
+            this.token = token;
 
             // Connect to the websocket
             await this.websocket.Connect(Globals.getInstance().Token);

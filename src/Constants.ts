@@ -5,6 +5,7 @@ export class Constants {
     static OPCODES = {
         Data: 0,
         HEARTBEAT: 1,
+        HEARTBEAT_RESPONSE: 11,
         IDENTIFY: 2,
         HELLO: 10,
         RESUME: 6

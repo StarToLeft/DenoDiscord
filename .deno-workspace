@@ -5,7 +5,7 @@ scripts:
     develop:
         file: ./examples/app.ts
 globals:
-    permissions:
+    deno_options:
         allow-net: true
         allow-read: true
         allow-env: true

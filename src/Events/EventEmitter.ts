@@ -85,7 +85,13 @@ export default class EventEmitter {
                 }
 
                 case "MESSAGE_CREATE": {
-                    let eventData = new MessageCreatedEvent(data?.d, this.client);
+                    let eventData = new MessageCreatedEvent(this.client);
+                    await eventData.assign(data?.d)
+                    
+                    // Check for itself
+                    if (data?.d?.author?.id == this.client.user.id) {
+                        return false;
+                    }
 
                     this.TriggerEvent(data.t, eventData);
                     break;
